@@ -1,0 +1,50 @@
+@reference "../../../../index.css";
+
+@keyframes attention-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+.root {
+  @apply flex items-center justify-between gap-4 rounded-card border border-border p-6;
+  /* Sombreado en degradé por dentro de la card (no en el borde): una capa de gradiente
+     semitransparente encima del fondo sólido de siempre, así se ve como un "wash" de
+     luz interior en vez de un marco. */
+  background-image: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-accent) 20%, transparent),
+      color-mix(in srgb, var(--color-online) 20%, transparent)
+    ),
+    linear-gradient(var(--color-surface-elevated), var(--color-surface-elevated));
+  animation: attention-pulse 2.4s ease-in-out infinite;
+}
+
+.message {
+  @apply text-sm text-text-primary;
+}
+
+.fromId {
+  @apply font-mono font-semibold tracking-wide;
+}
+
+.actions {
+  @apply flex items-center gap-2;
+}
+
+.reject,
+.accept {
+  @apply flex h-12 w-12 items-center justify-center rounded-pill text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.reject {
+  @apply bg-danger hover:bg-danger-hover;
+}
+
+.accept {
+  @apply bg-online hover:opacity-90;
+}

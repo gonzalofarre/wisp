@@ -1,0 +1,13 @@
+@reference "../../index.css";
+
+.dot {
+  @apply inline-block h-2.5 w-2.5 rounded-pill border-2 border-surface;
+}
+
+.online {
+  @apply bg-online;
+}
+
+.offline {
+  @apply bg-offline;
+}

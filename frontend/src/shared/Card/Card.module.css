@@ -1,0 +1,5 @@
+@reference "../../index.css";
+
+.card {
+  @apply rounded-card border border-border bg-surface-elevated p-4;
+}

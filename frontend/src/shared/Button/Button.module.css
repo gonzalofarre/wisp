@@ -1,0 +1,21 @@
+@reference "../../index.css";
+
+.button {
+  @apply inline-flex items-center justify-center gap-2 rounded-control px-4 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.primary {
+  @apply bg-accent text-white hover:bg-accent-hover;
+}
+
+.secondary {
+  @apply border border-border bg-surface-elevated text-text-primary hover:bg-surface;
+}
+
+.destructive {
+  @apply bg-danger text-white hover:bg-danger-hover;
+}
+
+.ghost {
+  @apply bg-transparent text-text-secondary hover:bg-surface-elevated hover:text-text-primary;
+}

@@ -1,0 +1,17 @@
+@reference "../../index.css";
+
+.nav {
+  @apply flex items-center justify-around border-t border-border bg-surface px-2 py-2;
+}
+
+.tab {
+  @apply flex flex-1 flex-col items-center gap-1 rounded-control py-1.5 text-text-secondary transition-colors;
+}
+
+.tab.active {
+  @apply text-accent;
+}
+
+.label {
+  @apply text-xs font-medium;
+}

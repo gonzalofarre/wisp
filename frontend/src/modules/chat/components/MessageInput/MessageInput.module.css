@@ -1,0 +1,5 @@
+@reference "../../../../index.css";
+
+.root {
+  @apply relative flex items-center gap-2 border-t border-border p-3;
+}

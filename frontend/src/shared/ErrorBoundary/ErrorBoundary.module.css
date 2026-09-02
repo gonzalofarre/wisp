@@ -1,0 +1,17 @@
+@reference "../../index.css";
+
+.root {
+  @apply flex min-h-screen items-center justify-center p-6;
+}
+
+.content {
+  @apply w-full max-w-sm space-y-5 text-center;
+}
+
+.title {
+  @apply text-2xl font-semibold;
+}
+
+.subtitle {
+  @apply text-sm text-text-secondary;
+}

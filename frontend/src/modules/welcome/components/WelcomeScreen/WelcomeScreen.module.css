@@ -1,0 +1,29 @@
+@reference "../../../../index.css";
+
+.root {
+  @apply flex min-h-screen items-center justify-center p-6;
+}
+
+.content {
+  @apply w-full max-w-sm space-y-5 text-center md:max-w-md md:space-y-6 md:rounded-card md:border md:border-border md:bg-surface md:p-10;
+}
+
+.icon {
+  @apply mx-auto h-20 w-20 md:hidden;
+}
+
+.title {
+  @apply text-2xl font-semibold md:text-3xl;
+}
+
+.subtitle {
+  @apply text-sm text-text-secondary;
+}
+
+.error {
+  @apply text-sm text-danger;
+}
+
+.notice {
+  @apply text-sm text-text-secondary;
+}

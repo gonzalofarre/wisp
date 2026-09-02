@@ -1,0 +1,50 @@
+@reference "../../../../index.css";
+
+.root {
+  @apply max-w-[75%] space-y-1 rounded-card px-3.5 py-2;
+}
+
+.own {
+  @apply self-end bg-accent text-white;
+}
+
+.other {
+  @apply self-start bg-surface-elevated text-text-primary;
+}
+
+.text {
+  @apply whitespace-pre-wrap break-words text-sm;
+}
+
+.time {
+  @apply block text-right text-[0.6875rem] opacity-70;
+}
+
+.image {
+  @apply max-h-64 max-w-full rounded-control object-cover;
+}
+
+.video {
+  @apply max-h-64 max-w-full rounded-control;
+}
+
+.audio {
+  @apply max-w-full;
+}
+
+.document {
+  @apply flex items-center gap-2 rounded-control bg-black/10 px-3 py-2 text-inherit no-underline;
+}
+
+.documentName {
+  @apply flex-1 truncate text-sm;
+}
+
+.documentSize {
+  @apply text-xs opacity-70;
+}
+
+.mediaLoading,
+.mediaError {
+  @apply text-sm italic opacity-80;
+}

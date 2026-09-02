@@ -1,0 +1,29 @@
+@reference "../../../../index.css";
+
+.backdrop {
+  @apply fixed inset-0 z-10 cursor-default bg-black/40;
+}
+
+.root {
+  @apply absolute inset-x-0 bottom-full z-20 mb-1 rounded-t-card border border-border bg-surface-elevated p-4;
+}
+
+.header {
+  @apply mb-3 flex items-center justify-between;
+}
+
+.title {
+  @apply text-sm font-medium text-text-secondary;
+}
+
+.grid {
+  @apply grid grid-cols-5 gap-2;
+}
+
+.option {
+  @apply flex flex-col items-center gap-1.5 rounded-control p-2 text-xs text-text-secondary transition-colors hover:bg-surface hover:text-text-primary;
+}
+
+.hiddenInput {
+  @apply hidden;
+}

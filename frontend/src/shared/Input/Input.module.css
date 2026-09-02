@@ -1,0 +1,5 @@
+@reference "../../index.css";
+
+.input {
+  @apply w-full rounded-control border border-border bg-surface px-3.5 py-2.5 text-sm text-text-primary outline-none transition-colors placeholder:text-text-secondary focus:border-accent;
+}

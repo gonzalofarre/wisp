@@ -1,0 +1,49 @@
+@reference "../../../../index.css";
+
+.root {
+  @apply space-y-3;
+}
+
+.container {
+  @apply w-full;
+}
+
+/* Grid fluido (no anchos fijos): los 8 casilleros ocupan siempre el 100% del ancho
+   disponible, igual que el texto y el botón de arriba/abajo — nunca lo sobrepasan,
+   sea mobile o desktop, a diferencia de un ancho en píxeles que puede no entrar. */
+.slots {
+  @apply grid w-full items-center gap-1.5;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto repeat(4, minmax(0, 1fr));
+}
+
+.separator {
+  @apply px-1 text-lg font-semibold text-text-secondary;
+}
+
+.slot {
+  @apply relative flex h-12 w-full min-w-0 items-center justify-center rounded-control border border-border bg-surface font-mono text-lg font-semibold tracking-wide text-text-primary transition-colors;
+}
+
+.slotActive {
+  @apply border-accent;
+}
+
+.placeholder {
+  @apply text-text-secondary/50;
+}
+
+.caret {
+  @apply absolute h-5 w-px animate-pulse bg-accent;
+}
+
+.pasteRow {
+  @apply flex justify-center;
+}
+
+.pasteButton {
+  @apply px-3 py-1.5 text-xs;
+}
+
+.pasteError {
+  @apply text-center text-xs text-danger;
+}

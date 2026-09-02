@@ -1,0 +1,5 @@
+@reference "../../index.css";
+
+.iconButton {
+  @apply inline-flex h-10 w-10 items-center justify-center rounded-pill text-text-secondary transition-colors hover:bg-surface-elevated hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50;
+}

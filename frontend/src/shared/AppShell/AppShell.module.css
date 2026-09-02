@@ -1,0 +1,29 @@
+@reference "../../index.css";
+
+.root {
+  @apply min-h-screen md:grid md:grid-cols-2;
+}
+
+.brandPanel {
+  @apply relative hidden overflow-hidden border-r border-border bg-surface md:flex md:flex-col md:items-center md:justify-center md:gap-4;
+}
+
+.glow {
+  @apply absolute h-[32rem] w-[32rem] rounded-full bg-accent/20 blur-3xl;
+}
+
+.logo {
+  @apply relative h-32 w-32;
+}
+
+.wordmark {
+  @apply relative text-4xl font-semibold text-text-primary;
+}
+
+.tagline {
+  @apply relative max-w-72 text-center text-base text-text-secondary;
+}
+
+.content {
+  @apply min-w-0;
+}

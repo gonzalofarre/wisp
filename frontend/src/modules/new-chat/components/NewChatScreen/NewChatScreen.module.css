@@ -1,0 +1,29 @@
+@reference "../../../../index.css";
+
+.root {
+  @apply flex min-h-screen flex-col;
+}
+
+.header {
+  @apply flex items-center gap-2 p-4;
+}
+
+.title {
+  @apply text-base font-semibold;
+}
+
+.content {
+  @apply flex flex-1 flex-col justify-center p-6;
+}
+
+.card {
+  @apply mx-auto flex w-full max-w-sm flex-col space-y-4 md:max-w-lg md:space-y-6 md:rounded-card md:border md:border-border md:bg-surface md:p-10;
+}
+
+.subtitle {
+  @apply text-sm text-text-secondary;
+}
+
+.error {
+  @apply text-sm text-danger;
+}

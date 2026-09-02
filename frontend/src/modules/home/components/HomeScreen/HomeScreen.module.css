@@ -1,0 +1,69 @@
+@reference "../../../../index.css";
+
+.root {
+  @apply flex min-h-screen flex-col;
+}
+
+.content {
+  @apply mx-auto w-full max-w-sm space-y-6 px-6 pb-8 pt-6 md:max-w-2xl md:space-y-8 md:px-16 md:pb-14 md:pt-14;
+}
+
+.requests {
+  @apply space-y-3;
+}
+
+.header {
+  @apply flex flex-col gap-3;
+}
+
+.endSession {
+  @apply -ml-4 self-start;
+}
+
+.divider {
+  @apply hidden border-t border-border md:block;
+}
+
+.chatsSection {
+  @apply space-y-5;
+}
+
+.chatsHeader {
+  @apply flex items-center justify-between gap-3;
+}
+
+.chatsTitle {
+  @apply hidden text-base font-semibold text-text-primary md:block;
+}
+
+.brandHeader {
+  @apply flex items-center gap-3 bg-accent-subtle px-6 py-4 md:hidden;
+}
+
+.logo {
+  @apply h-14 w-14;
+}
+
+.brandName {
+  @apply text-2xl font-semibold text-text-primary;
+}
+
+.label {
+  @apply text-xs font-medium text-text-secondary;
+}
+
+.expiration {
+  @apply text-xs text-text-secondary;
+}
+
+.error {
+  @apply text-sm text-danger;
+}
+
+.emptyState {
+  @apply space-y-1 text-center text-sm text-text-secondary md:p-10;
+}
+
+.emptyStateHint {
+  @apply text-xs;
+}

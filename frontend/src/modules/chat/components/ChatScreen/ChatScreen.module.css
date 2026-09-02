@@ -1,0 +1,28 @@
+@reference "../../../../index.css";
+
+.root {
+  /* Sin tope de ancho, en desktop los mensajes se estirarían a lo ancho de toda la
+     pantalla — mx-auto + max-w lo deja como una columna de chat cómoda, igual que
+     Home/Welcome/New Chat ya hacen con max-w-sm para sus formularios. */
+  @apply mx-auto flex h-screen w-full max-w-2xl flex-col;
+}
+
+.header {
+  @apply flex items-center gap-3 border-b border-border p-4;
+}
+
+.recipientId {
+  @apply font-mono text-sm font-semibold tracking-wide;
+}
+
+.error {
+  @apply p-6 text-sm text-danger;
+}
+
+.reconnecting {
+  @apply bg-surface-elevated px-4 py-1.5 text-center text-xs text-text-secondary;
+}
+
+.ephemeralNotice {
+  @apply border-b border-border px-4 py-1.5 text-center text-xs text-text-secondary;
+}
