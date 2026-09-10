@@ -9,6 +9,7 @@ import {
 } from '@nestjs/websockets';
 import type { Server, Socket } from 'socket.io';
 import { SessionService, type SessionRecord } from '../session/session.service.js';
+import { PresenceService } from '../session/presence.service.js';
 import { ChatService, type ChatRecord } from '../chat/chat.service.js';
 import { MediaService, deriveMediaKind } from '../media/media.service.js';
 import { resolveCorsOrigin } from '../../config/cors.js';
@@ -38,15 +39,11 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   @WebSocketServer()
   private server!: Server;
 
-  // Cuenta de sockets conectados por sesión, no un simple booleano — la misma sesión
-  // puede tener más de un socket vivo (dos pestañas de vuelta, o una reconexión que
-  // todavía no cerró la anterior), y "offline" solo debería salir cuando llega a cero.
-  private readonly onlineSocketCountBySessionId = new Map<string, number>();
-
   constructor(
     private readonly sessionService: SessionService,
     private readonly chatService: ChatService,
     private readonly mediaService: MediaService,
+    private readonly presenceService: PresenceService,
   ) {}
 
   // Auth por token de sesión, no por el ID a secas: cualquiera que sepa un ID no puede
@@ -62,9 +59,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
 
     client.data.session = session;
-    const previousCount = this.onlineSocketCountBySessionId.get(session.id) ?? 0;
-    this.onlineSocketCountBySessionId.set(session.id, previousCount + 1);
-    if (previousCount === 0) this.broadcastPresence(session.id, true);
+    if (this.presenceService.markOnline(session.id)) this.broadcastPresence(session.id, true);
   }
 
   // No hay garantía de que handleConnection haya llegado a setear client.data.session
@@ -73,13 +68,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     const session = client.data.session as SessionRecord | undefined;
     if (!session) return;
 
-    const nextCount = (this.onlineSocketCountBySessionId.get(session.id) ?? 1) - 1;
-    if (nextCount <= 0) {
-      this.onlineSocketCountBySessionId.delete(session.id);
-      this.broadcastPresence(session.id, false);
-    } else {
-      this.onlineSocketCountBySessionId.set(session.id, nextCount);
-    }
+    if (this.presenceService.markOffline(session.id)) this.broadcastPresence(session.id, false);
   }
 
   @SubscribeMessage('chat:join')
@@ -104,11 +93,16 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
         this.server.to(this.room(chatId)).emit('chat:delivered', { chatId, deliveredTo: session.id });
       }
 
+      // "Leído" en el sentido de Home/la lista de chats (para bajar el badge de no
+      // leídos) — no tiene nada que ver con avisarle al remitente, eso es `delivered`
+      // arriba y a propósito no existe un check de lectura hacia el otro lado.
+      this.chatService.markRead(chatId, session.id);
+
       const recipientId = this.otherParticipant(chat, session.id);
       return {
         ok: true,
         messages: this.chatService.getMessages(chatId),
-        recipientOnline: this.isOnline(recipientId),
+        recipientOnline: this.presenceService.isOnline(recipientId),
       };
     } catch (error) {
       return this.handleUnexpectedError('chat:join', error);
@@ -138,7 +132,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       const message = this.chatService.addMessage(chatId, session.id, { kind: 'text', text });
       // Si el destinatario ya está conectado, esto llega "entregado" desde el vertazo
       // (doble check gris de entrada) — si no, se pone al día en chat:join más tarde.
-      message.delivered = this.isOnline(this.otherParticipant(chat, session.id));
+      message.delivered = this.presenceService.isOnline(this.otherParticipant(chat, session.id));
       this.server.to(this.room(chatId)).emit('chat:message', message);
       return { ok: true, message };
     } catch (error) {
@@ -201,7 +195,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       kind,
       media: { id: media.id, mimeType: media.mimeType, fileName: media.fileName, size: media.size },
     });
-    message.delivered = this.isOnline(this.otherParticipant(chat, session.id));
+    message.delivered = this.presenceService.isOnline(this.otherParticipant(chat, session.id));
     this.server.to(this.room(chat.id)).emit('chat:message', message);
     return { ok: true, message };
   }
@@ -226,10 +220,6 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   private room(chatId: string): string {
     return `chat:${chatId}`;
-  }
-
-  private isOnline(sessionId: string): boolean {
-    return (this.onlineSocketCountBySessionId.get(sessionId) ?? 0) > 0;
   }
 
   private otherParticipant(chat: ChatRecord, participantId: string): string {

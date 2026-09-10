@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { formatRecipientId, cleanRecipientIdChars, formatFileSize, formatMessageTime } from './format'
+import {
+  formatRecipientId,
+  cleanRecipientIdChars,
+  formatFileSize,
+  formatMessageTime,
+  formatRelativeTime,
+} from './format'
 
 describe('cleanRecipientIdChars', () => {
   it('uppercases and strips non-alphanumeric characters without adding a dash', () => {
@@ -53,5 +59,29 @@ describe('formatMessageTime', () => {
   it('renders an hour:minute string', () => {
     const timestamp = new Date('2026-01-01T15:30:00').getTime()
     expect(formatMessageTime(timestamp)).toMatch(/\d{1,2}:\d{2}/)
+  })
+})
+
+describe('formatRelativeTime', () => {
+  const now = new Date('2026-01-01T12:00:00').getTime()
+
+  it('renders under a minute as "now"', () => {
+    expect(formatRelativeTime(now - 30_000, now)).toBe('now')
+  })
+
+  it('renders minutes', () => {
+    expect(formatRelativeTime(now - 18 * 60_000, now)).toBe('18m')
+  })
+
+  it('renders hours once past 60 minutes', () => {
+    expect(formatRelativeTime(now - 90 * 60_000, now)).toBe('1h')
+  })
+
+  it('renders days once past 24 hours', () => {
+    expect(formatRelativeTime(now - 30 * 60 * 60_000, now)).toBe('1d')
+  })
+
+  it('never goes negative for a clock skewed slightly into the future', () => {
+    expect(formatRelativeTime(now + 5_000, now)).toBe('now')
   })
 })

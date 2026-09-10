@@ -1,2 +1,37 @@
+@reference "../../../../index.css";
+
 .root {
+  @apply flex w-full flex-col gap-1 rounded-card border border-border bg-surface-elevated p-3.5 text-left transition-colors hover:bg-surface;
+}
+
+.topRow {
+  @apply flex items-center gap-2;
+}
+
+.statusDot {
+  @apply shrink-0;
+}
+
+.recipientId {
+  @apply min-w-0 flex-1 truncate font-mono text-sm font-semibold tracking-wide text-text-primary;
+}
+
+.time {
+  @apply shrink-0 font-mono text-xs text-text-secondary;
+}
+
+.bottomRow {
+  @apply flex items-center gap-2 pl-[18px];
+}
+
+.preview {
+  @apply min-w-0 flex-1 truncate text-sm text-text-secondary;
+}
+
+.previewUnread {
+  @apply font-medium text-text-primary;
+}
+
+.badge {
+  @apply shrink-0;
 }

@@ -12,6 +12,10 @@
   @apply space-y-3;
 }
 
+.chatList {
+  @apply space-y-2;
+}
+
 .header {
   @apply flex flex-col gap-3;
 }

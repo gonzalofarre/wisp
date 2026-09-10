@@ -15,6 +15,7 @@ import { ChatService } from './chat.service.js';
 import { SessionService } from '../session/session.service.js';
 import { SessionAuthGuard, type AuthenticatedRequest } from '../session/session-auth.guard.js';
 import { RateLimitGuard } from '../session/rate-limit.guard.js';
+import { PresenceService } from '../session/presence.service.js';
 
 interface CreateChatBody {
   recipientId?: unknown;
@@ -26,6 +27,7 @@ export class ChatController {
   constructor(
     private readonly chatService: ChatService,
     private readonly sessionService: SessionService,
+    private readonly presenceService: PresenceService,
   ) {}
 
   @Post()
@@ -44,6 +46,18 @@ export class ChatController {
 
     const chat = this.chatService.createOrGetChat(ownId, recipientId);
     return { chatId: chat.id, recipientId, status: chat.status };
+  }
+
+  // Lista de conversaciones para Home — solo las 'accepted' (las 'pending' entrantes
+  // tienen su propio endpoint, ver abajo). Se agrega el online/offline acá porque Home no
+  // abre un socket como sí hace ChatScreen; esto viaja por el mismo poll periódico que ya
+  // usa el front para /chat/requests.
+  @Get()
+  list(@Req() request: AuthenticatedRequest) {
+    return this.chatService.getChatSummaries(request.session.id).map((summary) => ({
+      ...summary,
+      recipientOnline: this.presenceService.isOnline(summary.recipientId),
+    }));
   }
 
   // Declarado antes de ':id' — si no, Nest/Express matchea "requests" contra el

@@ -6,13 +6,36 @@ import { Button } from '@/shared/Button/Button'
 import { Card } from '@/shared/Card/Card'
 import { BottomNav, type BottomNavTab } from '@/shared/BottomNav/BottomNav'
 import { SessionIdDisplay } from '@/modules/welcome/components/SessionIdDisplay/SessionIdDisplay'
+import type { MessageKind } from '@/modules/chat/types'
 import { ChatRequestCard } from '../ChatRequestCard/ChatRequestCard'
+import { ChatListItem } from '../ChatListItem/ChatListItem'
 import styles from './HomeScreen.module.css'
 
 interface PendingRequest {
   chatId: string
   fromId: string
   createdAt: number
+}
+
+interface ChatSummary {
+  chatId: string
+  recipientId: string
+  recipientOnline: boolean
+  lastMessage?: { kind: MessageKind; text?: string; createdAt: number }
+  unreadCount: number
+}
+
+const MEDIA_PREVIEW_LABEL: Record<Exclude<MessageKind, 'text'>, string> = {
+  image: 'Sent a photo',
+  video: 'Sent a video',
+  audio: 'Sent an audio message',
+  document: 'Sent a document',
+}
+
+function describeLastMessage(message: ChatSummary['lastMessage']): string {
+  if (!message) return 'No messages yet'
+  if (message.kind === 'text') return message.text ?? ''
+  return MEDIA_PREVIEW_LABEL[message.kind]
 }
 
 // No hay socket abierto en Home todavía (solo ChatScreen conecta uno, por chat) — un
@@ -25,6 +48,7 @@ export function HomeScreen() {
   const { session, endSession, refreshSession, isRefreshing, error } = useSession()
   const navigate = useNavigate()
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([])
+  const [chats, setChats] = useState<ChatSummary[]>([])
   const [respondingId, setRespondingId] = useState<string | null>(null)
   const [requestError, setRequestError] = useState<string | null>(null)
 
@@ -33,16 +57,19 @@ export function HomeScreen() {
     const token = session.token
     let cancelled = false
 
+    // Un solo tick pide las dos cosas — no tiene sentido que el badge de no leídos y el
+    // punto online/offline (acá) y las solicitudes pendientes queden desincronizados
+    // entre sí por correr en pollers separados.
     async function poll() {
-      try {
-        const requests = await apiFetch<PendingRequest[]>('/chat/requests', {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (!cancelled) setPendingRequests(requests)
-      } catch {
-        // Silencioso a propósito: un poll fallido no debe tapar la pantalla con un
-        // error — se reintenta solo en el próximo tick.
-      }
+      const [requestsResult, chatsResult] = await Promise.allSettled([
+        apiFetch<PendingRequest[]>('/chat/requests', { headers: { Authorization: `Bearer ${token}` } }),
+        apiFetch<ChatSummary[]>('/chat', { headers: { Authorization: `Bearer ${token}` } }),
+      ])
+      if (cancelled) return
+      // Silencioso a propósito en caso de error: un poll fallido no debe tapar la
+      // pantalla — se reintenta solo en el próximo tick.
+      if (requestsResult.status === 'fulfilled') setPendingRequests(requestsResult.value)
+      if (chatsResult.status === 'fulfilled') setChats(chatsResult.value)
     }
 
     poll()
@@ -132,7 +159,7 @@ export function HomeScreen() {
 
           {requestError && <p className={styles.error}>{requestError}</p>}
 
-          {pendingRequests.length > 0 ? (
+          {pendingRequests.length > 0 && (
             <div className={styles.requests}>
               {pendingRequests.map((request) => (
                 <ChatRequestCard
@@ -144,11 +171,29 @@ export function HomeScreen() {
                 />
               ))}
             </div>
+          )}
+
+          {chats.length > 0 ? (
+            <div className={styles.chatList}>
+              {chats.map((chat) => (
+                <ChatListItem
+                  key={chat.chatId}
+                  recipientId={chat.recipientId}
+                  online={chat.recipientOnline}
+                  preview={describeLastMessage(chat.lastMessage)}
+                  timestamp={chat.lastMessage?.createdAt}
+                  unreadCount={chat.unreadCount}
+                  onClick={() => navigate(`/chat/${chat.chatId}`, { state: { recipientId: chat.recipientId } })}
+                />
+              ))}
+            </div>
           ) : (
-            <Card className={styles.emptyState}>
-              <p>No active chats yet.</p>
-              <p className={styles.emptyStateHint}>Start a new chat to see it here.</p>
-            </Card>
+            pendingRequests.length === 0 && (
+              <Card className={styles.emptyState}>
+                <p>No active chats yet.</p>
+                <p className={styles.emptyStateHint}>Start a new chat to see it here.</p>
+              </Card>
+            )
           )}
         </div>
       </div>

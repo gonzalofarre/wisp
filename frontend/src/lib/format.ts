@@ -27,3 +27,19 @@ export function formatFileSize(bytes: number): string {
 export function formatMessageTime(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 }
+
+// Para el preview de la lista de chats en Home ("2m", "3h") — no hace falta más
+// resolución que esa (los mensajes igual vencen a los pocos minutos, ver MESSAGE_TTL_MS).
+export function formatRelativeTime(timestamp: number, now: number = Date.now()): string {
+  const diffSeconds = Math.max(0, Math.floor((now - timestamp) / 1000))
+  if (diffSeconds < 60) return 'now'
+
+  const diffMinutes = Math.floor(diffSeconds / 60)
+  if (diffMinutes < 60) return `${diffMinutes}m`
+
+  const diffHours = Math.floor(diffMinutes / 60)
+  if (diffHours < 24) return `${diffHours}h`
+
+  const diffDays = Math.floor(diffHours / 24)
+  return `${diffDays}d`
+}

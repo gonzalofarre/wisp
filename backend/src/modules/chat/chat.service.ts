@@ -49,6 +49,13 @@ export interface MessageContent {
   media?: MessageMedia;
 }
 
+export interface ChatSummary {
+  chatId: string;
+  recipientId: string;
+  lastMessage?: { kind: MessageKind; text?: string; createdAt: number };
+  unreadCount: number;
+}
+
 // Default alineado con el ejemplo del mockup de Settings ("Auto-delete chats, ej. 5 min");
 // todavía no es configurable por el usuario, eso queda para cuando exista esa pantalla.
 const MESSAGE_TTL_MS = Number(process.env.MESSAGE_TTL_MS ?? 5 * 60_000);
@@ -61,6 +68,10 @@ export class ChatService implements OnModuleDestroy {
   // duplicado si ambos lados inician el "New chat" el uno hacia el otro.
   private readonly chatIdByParticipantKey = new Map<string, string>();
   private readonly messagesByChatId = new Map<string, ChatMessage[]>();
+  // chatId -> (participantId -> cuándo lo leyó por última vez). Ver markRead: es un
+  // marcador puramente para el que mira su propia lista de chats (bajar el badge de no
+  // leídos) — nunca se le manda al otro participante, no es un "leído" en ese sentido.
+  private readonly lastReadAtByChatId = new Map<string, Map<string, number>>();
   private readonly cleanupInterval = setInterval(() => this.sweepExpiredMessages(), CLEANUP_INTERVAL_MS);
 
   onModuleDestroy(): void {
@@ -191,6 +202,41 @@ export class ChatService implements OnModuleDestroy {
     }
 
     return updated;
+  }
+
+  markRead(chatId: string, participantId: string): void {
+    let byParticipant = this.lastReadAtByChatId.get(chatId);
+    if (!byParticipant) {
+      byParticipant = new Map();
+      this.lastReadAtByChatId.set(chatId, byParticipant);
+    }
+    byParticipant.set(participantId, Date.now());
+  }
+
+  // Para el listado de Home: un resumen por chat aceptado (los 'pending' viven en
+  // getPendingRequestsFor / ChatRequestCard, no acá) con el último mensaje y cuántos de
+  // los que mandó el OTRO participante todavía no pasaron por markRead.
+  getChatSummaries(participantId: string): ChatSummary[] {
+    return this.getChatsForParticipant(participantId)
+      .filter((chat) => chat.status === 'accepted')
+      .map((chat): ChatSummary => {
+        const recipientId = chat.participantIds.find((id) => id !== participantId) ?? participantId;
+        const messages = this.getMessages(chat.id);
+        const lastMessage = messages[messages.length - 1];
+        const lastReadAt = this.lastReadAtByChatId.get(chat.id)?.get(participantId) ?? 0;
+        const unreadCount = messages.filter(
+          (message) => message.senderId !== participantId && message.createdAt > lastReadAt,
+        ).length;
+
+        return {
+          chatId: chat.id,
+          recipientId,
+          lastMessage: lastMessage
+            ? { kind: lastMessage.kind, text: lastMessage.text, createdAt: lastMessage.createdAt }
+            : undefined,
+          unreadCount,
+        };
+      });
   }
 
   // Lazy + sweep: acá se filtran por si nadie corrió el barrido todavía, y de paso se

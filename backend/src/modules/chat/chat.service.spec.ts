@@ -193,6 +193,53 @@ describe('ChatService', () => {
     });
   });
 
+  describe('getChatSummaries', () => {
+    it('only includes accepted chats, with the last message and unread count', () => {
+      const accepted = service.createOrGetChat('AAAA-1111', 'BBBB-2222');
+      service.respondToRequest(accepted.id, 'BBBB-2222', true);
+      service.createOrGetChat('AAAA-1111', 'CCCC-3333'); // still pending, excluded
+
+      service.addMessage(accepted.id, 'AAAA-1111', { kind: 'text', text: 'hola' });
+      const last = service.addMessage(accepted.id, 'AAAA-1111', { kind: 'text', text: 'todo bien?' });
+
+      const summaries = service.getChatSummaries('BBBB-2222');
+
+      expect(summaries).toEqual([
+        {
+          chatId: accepted.id,
+          recipientId: 'AAAA-1111',
+          lastMessage: { kind: 'text', text: 'todo bien?', createdAt: last.createdAt },
+          unreadCount: 2,
+        },
+      ]);
+    });
+
+    it('drops the unread count to zero for messages sent before the last read mark', () => {
+      const chat = service.createOrGetChat('AAAA-1111', 'BBBB-2222');
+      service.respondToRequest(chat.id, 'BBBB-2222', true);
+      service.addMessage(chat.id, 'AAAA-1111', { kind: 'text', text: 'hola' });
+
+      service.markRead(chat.id, 'BBBB-2222');
+
+      expect(service.getChatSummaries('BBBB-2222')[0].unreadCount).toBe(0);
+    });
+
+    it("doesn't count the participant's own messages as unread", () => {
+      const chat = service.createOrGetChat('AAAA-1111', 'BBBB-2222');
+      service.respondToRequest(chat.id, 'BBBB-2222', true);
+      service.addMessage(chat.id, 'BBBB-2222', { kind: 'text', text: 'hola' });
+
+      expect(service.getChatSummaries('BBBB-2222')[0].unreadCount).toBe(0);
+    });
+
+    it('has no lastMessage for a chat with no messages yet', () => {
+      const chat = service.createOrGetChat('AAAA-1111', 'BBBB-2222');
+      service.respondToRequest(chat.id, 'BBBB-2222', true);
+
+      expect(service.getChatSummaries('BBBB-2222')[0].lastMessage).toBeUndefined();
+    });
+  });
+
   describe('setMediaStatus', () => {
     const media = { id: 'media-1', mimeType: 'image/png', fileName: 'a.png', size: 10 };
 
