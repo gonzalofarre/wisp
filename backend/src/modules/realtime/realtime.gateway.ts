@@ -24,6 +24,12 @@ interface SendPayload {
   mediaId?: unknown;
 }
 
+interface MediaStatusPayload {
+  chatId?: unknown;
+  messageId?: unknown;
+  status?: unknown;
+}
+
 // Mismo origen que main.ts — el adapter de socket.io no hereda el enableCors() de Nest,
 // hay que declararlo acá también.
 @WebSocketGateway({ cors: { origin: resolveCorsOrigin() } })
@@ -96,6 +102,35 @@ export class RealtimeGateway implements OnGatewayConnection {
       return { ok: true, message };
     } catch (error) {
       return this.handleUnexpectedError('chat:message', error);
+    }
+  }
+
+  // "View once" y "Delete" del destinatario llegan acá. La room entera (destinatario
+  // Y quien mandó) recibe el broadcast, así el remitente también ve que se vio o se
+  // descartó — sin eso, su propia burbuja quedaría mintiendo sobre un archivo que ya no existe.
+  @SubscribeMessage('chat:media-status')
+  handleMediaStatus(@ConnectedSocket() client: Socket, @MessageBody() body: MediaStatusPayload) {
+    try {
+      const session = this.requireSession(client);
+      if (!session) return { ok: false, error: 'Not authenticated' };
+
+      const chatId = typeof body?.chatId === 'string' ? body.chatId : undefined;
+      const messageId = typeof body?.messageId === 'string' ? body.messageId : undefined;
+      const status = body?.status === 'viewed' || body?.status === 'deleted' ? body.status : undefined;
+      if (!chatId || !messageId || !status) return { ok: false, error: 'Invalid request' };
+
+      const chat = this.chatService.getChatForParticipant(chatId, session.id);
+      if (!chat) return { ok: false, error: 'Chat not found' };
+
+      const message = this.chatService.setMediaStatus(chatId, messageId, session.id, status);
+      if (!message) return { ok: false, error: 'Message not found or already resolved' };
+
+      if (message.media) this.mediaService.delete(message.media.id);
+
+      this.server.to(this.room(chatId)).emit('chat:media-status', { messageId, status });
+      return { ok: true };
+    } catch (error) {
+      return this.handleUnexpectedError('chat:media-status', error);
     }
   }
 

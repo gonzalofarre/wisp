@@ -7,7 +7,7 @@ import { getSocket } from '@/lib/socket'
 import { IconButton } from '@/shared/IconButton/IconButton'
 import { MessageList } from '../MessageList/MessageList'
 import { MessageInput } from '../MessageInput/MessageInput'
-import type { ChatMessage } from '../../types'
+import type { ChatMessage, MediaStatus } from '../../types'
 import { PENDING_MEDIA_STORAGE_KEY, type PendingMedia } from '../../pendingMedia'
 import styles from './ChatScreen.module.css'
 
@@ -29,6 +29,16 @@ interface JoinAck {
 interface SendAck {
   ok: boolean
   error?: string
+}
+
+interface MediaStatusAck {
+  ok: boolean
+  error?: string
+}
+
+interface MediaStatusEvent {
+  messageId: string
+  status: MediaStatus
 }
 
 export function ChatScreen() {
@@ -122,6 +132,15 @@ export function ChatScreen() {
       }
     }
 
+    // El servidor le pega este evento a toda la room (destinatario y remitente) apenas
+    // se resuelve un "View once" o "Delete" — así las dos burbujas del mismo mensaje
+    // quedan de acuerdo en que el adjunto ya no está, sin importar quién lo resolvió.
+    function handleMediaStatus({ messageId, status }: MediaStatusEvent) {
+      setMessages((current) =>
+        current.map((message) => (message.id === messageId ? { ...message, mediaStatus: status } : message)),
+      )
+    }
+
     // El servidor emite esto cuando el token dejó de ser válido (sesión vencida por TTL)
     // antes de cortar la conexión — mismo evento global que usa apiFetch ante un 401, así
     // SessionProvider cierra la sesión sin importar si el corte vino de un fetch o del socket.
@@ -132,6 +151,7 @@ export function ChatScreen() {
     socket.on('connect', handleConnect)
     socket.on('disconnect', handleDisconnect)
     socket.on('chat:message', handleIncomingMessage)
+    socket.on('chat:media-status', handleMediaStatus)
     socket.on('session:expired', handleSessionExpired)
 
     socket.connect()
@@ -140,6 +160,7 @@ export function ChatScreen() {
       socket.off('connect', handleConnect)
       socket.off('disconnect', handleDisconnect)
       socket.off('chat:message', handleIncomingMessage)
+      socket.off('chat:media-status', handleMediaStatus)
       socket.off('session:expired', handleSessionExpired)
       socket.disconnect()
     }
@@ -149,6 +170,19 @@ export function ChatScreen() {
     if (!chatId) return
     getSocket().emit('chat:message', { chatId, text }, (ack: SendAck) => {
       if (!ack.ok) setError(ack.error ?? 'Message could not be sent')
+    })
+  }
+
+  // No actualiza `messages` acá directamente — el broadcast que el servidor manda de
+  // vuelta a la room (handleMediaStatus arriba) es la única fuente de verdad para
+  // mediaStatus, así el remitente y el destinatario nunca pueden quedar en desacuerdo.
+  // Esta función solo reporta si el pedido falló.
+  function resolveMediaStatus(messageId: string, status: MediaStatus): Promise<string | undefined> {
+    if (!chatId) return Promise.resolve('Not connected')
+    return new Promise((resolve) => {
+      getSocket().emit('chat:media-status', { chatId, messageId, status }, (ack: MediaStatusAck) => {
+        resolve(ack.ok ? undefined : (ack.error ?? 'Could not update this attachment'))
+      })
     })
   }
 
@@ -182,7 +216,7 @@ export function ChatScreen() {
       {!isConnected && <p className={styles.reconnecting}>Connecting…</p>}
       <p className={styles.ephemeralNotice}>Messages disappear a few minutes after they're sent</p>
 
-      <MessageList messages={messages} ownId={session?.id ?? ''} />
+      <MessageList messages={messages} ownId={session?.id ?? ''} onMediaStatusChange={resolveMediaStatus} />
       <MessageInput onSend={handleSend} onAttach={handleAttach} disabled={!isConnected} />
     </div>
   )

@@ -56,4 +56,21 @@ describe('MediaService', () => {
 
     expect(service.get(stored.id)).toBeUndefined();
   });
+
+  it('delete makes the media unreachable', () => {
+    const stored = service.store({
+      uploaderId: 'AAAA-1111',
+      mimeType: 'text/plain',
+      fileName: 'nota.txt',
+      buffer: Buffer.from('hola'),
+    });
+
+    service.delete(stored.id);
+
+    expect(service.get(stored.id)).toBeUndefined();
+  });
+
+  it('delete on an unknown ID is a no-op', () => {
+    expect(() => service.delete('unknown')).not.toThrow();
+  });
 });

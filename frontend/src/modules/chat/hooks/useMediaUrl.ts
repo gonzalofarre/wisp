@@ -8,6 +8,16 @@ interface MediaUrlState {
   error?: string
 }
 
+// Compartido entre el auto-load de abajo (mensajes propios) y las acciones a demanda de
+// un adjunto recibido (View once, Download) — un solo lugar que sabe pedir /media/:id.
+export async function fetchMediaBlob(mediaId: string, token: string): Promise<Blob> {
+  const response = await fetch(`${API_BASE_URL}/media/${mediaId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) throw new Error('Media not found or expired')
+  return response.blob()
+}
+
 // <img>/<video>/<audio src> no pueden mandar el header Authorization, así que en vez de
 // dejar el endpoint de media sin auth, lo pedimos por fetch y armamos un blob: URL local.
 export function useMediaUrl(mediaId: string): MediaUrlState {
@@ -15,18 +25,15 @@ export function useMediaUrl(mediaId: string): MediaUrlState {
   const [state, setState] = useState<MediaUrlState>({})
 
   useEffect(() => {
-    if (!session) return
+    // mediaId vacío es la señal de "no cargues nada" (media ya resuelta por View
+    // once/Delete, ver OwnMediaContent) — sin este guard se dispararía un fetch a
+    // /media/ de más en cada mensaje ya consumido.
+    if (!session || !mediaId) return
 
     let cancelled = false
     let objectUrl: string | undefined
 
-    fetch(`${API_BASE_URL}/media/${mediaId}`, {
-      headers: { Authorization: `Bearer ${session.token}` },
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error('Media not found or expired')
-        return response.blob()
-      })
+    fetchMediaBlob(mediaId, session.token)
       .then((blob) => {
         if (cancelled) return
         objectUrl = URL.createObjectURL(blob)

@@ -7,6 +7,8 @@ export interface MessageMedia {
   size: number
 }
 
+export type MediaStatus = 'viewed' | 'deleted'
+
 export interface ChatMessage {
   id: string
   chatId: string
@@ -14,6 +16,7 @@ export interface ChatMessage {
   kind: MessageKind
   text?: string
   media?: MessageMedia
+  mediaStatus?: MediaStatus
   createdAt: number
   expiresAt: number
 }

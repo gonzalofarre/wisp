@@ -151,4 +151,45 @@ describe('ChatService', () => {
       expect(messages).toEqual([alive]);
     });
   });
+
+  describe('setMediaStatus', () => {
+    const media = { id: 'media-1', mimeType: 'image/png', fileName: 'a.png', size: 10 };
+
+    it('lets the recipient mark a media message as viewed', () => {
+      const chat = service.createOrGetChat('AAAA-1111', 'BBBB-2222');
+      const message = service.addMessage(chat.id, 'AAAA-1111', { kind: 'image', media });
+
+      const updated = service.setMediaStatus(chat.id, message.id, 'BBBB-2222', 'viewed');
+
+      expect(updated?.mediaStatus).toBe('viewed');
+    });
+
+    it('refuses to let the sender consume their own media', () => {
+      const chat = service.createOrGetChat('AAAA-1111', 'BBBB-2222');
+      const message = service.addMessage(chat.id, 'AAAA-1111', { kind: 'image', media });
+
+      const updated = service.setMediaStatus(chat.id, message.id, 'AAAA-1111', 'viewed');
+
+      expect(updated).toBeUndefined();
+      expect(service.getMessages(chat.id)[0].mediaStatus).toBeUndefined();
+    });
+
+    it('refuses to resolve an already-resolved message', () => {
+      const chat = service.createOrGetChat('AAAA-1111', 'BBBB-2222');
+      const message = service.addMessage(chat.id, 'AAAA-1111', { kind: 'image', media });
+      service.setMediaStatus(chat.id, message.id, 'BBBB-2222', 'viewed');
+
+      const secondAttempt = service.setMediaStatus(chat.id, message.id, 'BBBB-2222', 'deleted');
+
+      expect(secondAttempt).toBeUndefined();
+      expect(service.getMessages(chat.id)[0].mediaStatus).toBe('viewed');
+    });
+
+    it('refuses a text message, which has no media to resolve', () => {
+      const chat = service.createOrGetChat('AAAA-1111', 'BBBB-2222');
+      const message = service.addMessage(chat.id, 'AAAA-1111', { kind: 'text', text: 'hola' });
+
+      expect(service.setMediaStatus(chat.id, message.id, 'BBBB-2222', 'viewed')).toBeUndefined();
+    });
+  });
 });

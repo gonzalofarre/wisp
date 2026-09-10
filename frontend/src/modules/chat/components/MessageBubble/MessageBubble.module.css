@@ -48,3 +48,27 @@
 .mediaError {
   @apply text-sm italic opacity-80;
 }
+
+.mediaStatusHint {
+  @apply text-sm italic opacity-70;
+}
+
+.gate {
+  @apply min-w-56 space-y-2.5;
+}
+
+.gateInfo {
+  @apply flex items-center gap-2;
+}
+
+.gateText {
+  @apply min-w-0 flex-1;
+}
+
+.gateActions {
+  @apply flex items-center gap-1.5;
+}
+
+.gateViewButton {
+  @apply flex-1;
+}

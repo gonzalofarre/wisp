@@ -21,6 +21,11 @@ export interface MessageMedia {
   size: number;
 }
 
+// Solo aplica a mensajes con media, y solo lo puede setear quien lo RECIBE (ver
+// setMediaStatus) — 'viewed' es el resultado de "View once", 'deleted' de que el
+// destinatario lo descartó sin abrirlo. undefined significa "todavía sin tocar".
+export type MediaStatus = 'viewed' | 'deleted';
+
 export interface ChatMessage {
   id: string;
   chatId: string;
@@ -28,6 +33,7 @@ export interface ChatMessage {
   kind: MessageKind;
   text?: string;
   media?: MessageMedia;
+  mediaStatus?: MediaStatus;
   createdAt: number;
   expiresAt: number;
 }
@@ -137,6 +143,23 @@ export class ChatService implements OnModuleDestroy {
     messages.push(message);
     this.messagesByChatId.set(chatId, messages);
 
+    return message;
+  }
+
+  // Solo el destinatario (nunca quien lo mandó) puede consumir o descartar un adjunto, y
+  // solo una vez — ya resuelto (viewed o deleted) no se puede pisar. El gateway es quien
+  // borra el archivo real en MediaService una vez que esto devuelve el mensaje actualizado.
+  setMediaStatus(
+    chatId: string,
+    messageId: string,
+    actorId: string,
+    status: MediaStatus,
+  ): ChatMessage | undefined {
+    const message = this.messagesByChatId.get(chatId)?.find((candidate) => candidate.id === messageId);
+    if (!message || !message.media) return undefined;
+    if (message.senderId === actorId || message.mediaStatus) return undefined;
+
+    message.mediaStatus = status;
     return message;
   }
 

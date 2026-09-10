@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ChatMessage } from '../../types'
+import type { ChatMessage, MediaStatus } from '../../types'
 import { MessageBubble } from '../MessageBubble/MessageBubble'
 import styles from './MessageList.module.css'
 
 interface MessageListProps {
   messages: ChatMessage[]
   ownId: string
+  onMediaStatusChange: (messageId: string, status: MediaStatus) => Promise<string | undefined>
 }
 
 const EXPIRY_CHECK_INTERVAL_MS = 5000
 
-export function MessageList({ messages, ownId }: MessageListProps) {
+export function MessageList({ messages, ownId, onMediaStatusChange }: MessageListProps) {
   const endRef = useRef<HTMLDivElement>(null)
   // Los mensajes vencen del lado del servidor por TTL; acá solo reflejamos esa expiración
   // en una vista ya abierta sin esperar a un rejoin — un tick liviano alcanza, no hace
@@ -39,7 +40,12 @@ export function MessageList({ messages, ownId }: MessageListProps) {
   return (
     <div className={styles.root}>
       {visibleMessages.map((message) => (
-        <MessageBubble key={message.id} message={message} isOwn={message.senderId === ownId} />
+        <MessageBubble
+          key={message.id}
+          message={message}
+          isOwn={message.senderId === ownId}
+          onMediaStatusChange={onMediaStatusChange}
+        />
       ))}
       <div ref={endRef} />
     </div>

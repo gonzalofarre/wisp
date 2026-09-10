@@ -86,6 +86,13 @@ export class MediaService implements OnModuleDestroy {
     return media;
   }
 
+  // Usado por "View once" (después de servir el contenido una vez) y por "Delete" (el
+  // destinatario lo descarta sin abrirlo) — en ambos casos el buffer deja de existir antes
+  // de que lo alcance el TTL normal.
+  delete(id: string): void {
+    this.mediaById.delete(id);
+  }
+
   private sweepExpired(): void {
     const now = Date.now();
     for (const [id, media] of this.mediaById) {
