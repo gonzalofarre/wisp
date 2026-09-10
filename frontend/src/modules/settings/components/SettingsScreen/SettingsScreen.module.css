@@ -1,0 +1,69 @@
+@reference "../../../../index.css";
+
+.root {
+  @apply flex min-h-screen flex-col;
+}
+
+.header {
+  @apply flex items-center gap-2 p-4;
+}
+
+.title {
+  @apply text-base font-semibold;
+}
+
+.content {
+  @apply mx-auto w-full max-w-sm flex-1 space-y-8 px-6 pb-8 md:max-w-2xl md:space-y-10 md:px-16 md:pb-14;
+}
+
+.section {
+  @apply space-y-3;
+}
+
+.sectionTitle {
+  @apply text-xs font-semibold uppercase tracking-wide text-text-secondary;
+}
+
+.row {
+  @apply flex items-center gap-3;
+}
+
+.rowIcon {
+  @apply shrink-0 text-text-secondary;
+}
+
+.rowText {
+  @apply min-w-0 flex-1 space-y-0.5;
+}
+
+.rowLabel {
+  @apply text-sm font-medium text-text-primary;
+}
+
+.rowHint {
+  @apply text-xs text-text-secondary;
+}
+
+.rowAction {
+  @apply shrink-0;
+}
+
+.confirm {
+  @apply text-xs text-online;
+}
+
+.disclosureCard {
+  @apply space-y-3;
+}
+
+.disclosureTrigger {
+  @apply flex w-full items-center gap-3 text-left;
+}
+
+.disclosureBody {
+  @apply text-sm text-text-secondary;
+}
+
+.eraseButton {
+  @apply w-full justify-center;
+}

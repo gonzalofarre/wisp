@@ -1,7 +1,7 @@
 @reference "../../index.css";
 
 .nav {
-  @apply flex items-center justify-around border-t border-border bg-surface px-2 py-2;
+  @apply sticky bottom-0 flex items-center justify-around border-t border-border bg-surface px-2 py-2 md:hidden;
 }
 
 .tab {

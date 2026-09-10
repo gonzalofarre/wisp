@@ -5,6 +5,7 @@ import { NewChatScreen } from '@/modules/new-chat/components/NewChatScreen/NewCh
 import { ChatScreen } from '@/modules/chat/components/ChatScreen/ChatScreen'
 import { MediaPreviewScreen } from '@/modules/media-preview/components/MediaPreviewScreen/MediaPreviewScreen'
 import { SessionEndScreen } from '@/modules/session-end/components/SessionEndScreen/SessionEndScreen'
+import { SettingsScreen } from '@/modules/settings/components/SettingsScreen/SettingsScreen'
 import { AppShell } from '@/shared/AppShell/AppShell'
 import { RequireSession } from './RequireSession'
 
@@ -46,6 +47,14 @@ export const router = createBrowserRouter([
         ),
       },
       { path: '/session-end', element: <SessionEndScreen /> },
+      {
+        path: '/settings',
+        element: (
+          <RequireSession>
+            <SettingsScreen />
+          </RequireSession>
+        ),
+      },
     ],
   },
 ])

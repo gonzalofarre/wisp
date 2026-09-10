@@ -4,6 +4,7 @@ import { useSession } from '@/hooks/useSession'
 import { apiFetch, ApiError } from '@/lib/api'
 import { Button } from '@/shared/Button/Button'
 import { Card } from '@/shared/Card/Card'
+import { BottomNav, type BottomNavTab } from '@/shared/BottomNav/BottomNav'
 import { SessionIdDisplay } from '@/modules/welcome/components/SessionIdDisplay/SessionIdDisplay'
 import { ChatRequestCard } from '../ChatRequestCard/ChatRequestCard'
 import styles from './HomeScreen.module.css'
@@ -85,6 +86,11 @@ export function HomeScreen() {
     }
   }
 
+  function handleNavTab(tab: BottomNavTab) {
+    if (tab === 'settings') navigate('/settings')
+    // "home" y "chats" son la misma pantalla hoy: la lista de chats ya vive acá.
+  }
+
   async function handleEndSession() {
     // Navegar primero: si limpiamos la sesión antes, RequireSession redirige /home a "/"
     // en cuanto session pasa a null, y gana la carrera contra este navigate a /session-end.
@@ -146,6 +152,8 @@ export function HomeScreen() {
           )}
         </div>
       </div>
+
+      <BottomNav active="home" onChange={handleNavTab} />
     </div>
   )
 }

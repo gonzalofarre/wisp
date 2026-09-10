@@ -5,7 +5,7 @@
 }
 
 .content {
-  @apply mx-auto w-full max-w-sm space-y-6 px-6 pb-8 pt-6 md:max-w-2xl md:space-y-8 md:px-16 md:pb-14 md:pt-14;
+  @apply mx-auto w-full max-w-sm flex-1 space-y-6 px-6 pb-8 pt-6 md:max-w-2xl md:space-y-8 md:px-16 md:pb-14 md:pt-14;
 }
 
 .requests {
