@@ -110,6 +110,21 @@ describe('ChatService', () => {
     });
   });
 
+  describe('getChatsForParticipant', () => {
+    it('returns every chat the participant is in, pending or accepted', () => {
+      const pending = service.createOrGetChat('AAAA-1111', 'BBBB-2222');
+      const accepted = service.createOrGetChat('AAAA-1111', 'CCCC-3333');
+      service.respondToRequest(accepted.id, 'CCCC-3333', true);
+
+      const chats = service.getChatsForParticipant('AAAA-1111');
+      expect(chats.map((c) => c.id).sort()).toEqual([accepted.id, pending.id].sort());
+    });
+
+    it('returns an empty list for someone with no chats', () => {
+      expect(service.getChatsForParticipant('ZZZZ-9999')).toEqual([]);
+    });
+  });
+
   describe('getChatForParticipant', () => {
     it('returns the chat when the requester is a participant', () => {
       const chat = service.createOrGetChat('AAAA-1111', 'BBBB-2222');
@@ -149,6 +164,32 @@ describe('ChatService', () => {
 
       const messages = service.getMessages(chat.id);
       expect(messages).toEqual([alive]);
+    });
+  });
+
+  describe('markDelivered', () => {
+    it("marks the other participant's undelivered messages and returns them", () => {
+      const chat = service.createOrGetChat('AAAA-1111', 'BBBB-2222');
+      const fromA = service.addMessage(chat.id, 'AAAA-1111', { kind: 'text', text: 'hola' });
+      const fromB = service.addMessage(chat.id, 'BBBB-2222', { kind: 'text', text: 'todo bien' });
+
+      const updated = service.markDelivered(chat.id, 'BBBB-2222');
+
+      expect(updated).toEqual([fromA]);
+      expect(service.getMessages(chat.id).find((m) => m.id === fromA.id)?.delivered).toBe(true);
+      expect(service.getMessages(chat.id).find((m) => m.id === fromB.id)?.delivered).toBe(false);
+    });
+
+    it('is a no-op the second time — nothing left to mark', () => {
+      const chat = service.createOrGetChat('AAAA-1111', 'BBBB-2222');
+      service.addMessage(chat.id, 'AAAA-1111', { kind: 'text', text: 'hola' });
+      service.markDelivered(chat.id, 'BBBB-2222');
+
+      expect(service.markDelivered(chat.id, 'BBBB-2222')).toEqual([]);
+    });
+
+    it('returns an empty list for a chat with no messages', () => {
+      expect(service.markDelivered('unknown', 'BBBB-2222')).toEqual([]);
     });
   });
 

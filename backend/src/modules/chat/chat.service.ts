@@ -34,6 +34,11 @@ export interface ChatMessage {
   text?: string;
   media?: MessageMedia;
   mediaStatus?: MediaStatus;
+  // "Entregado" (doble check gris), no "leído" — decisión explícita: no hay un check de
+  // lectura en v1, solo si el destinatario efectivamente llegó a recibirlo. Ver
+  // RealtimeGateway: true de entrada si estaba online al mandarlo, o lo marca
+  // markDelivered() cuando se une más tarde.
+  delivered: boolean;
   createdAt: number;
   expiresAt: number;
 }
@@ -117,6 +122,12 @@ export class ChatService implements OnModuleDestroy {
     return chat;
   }
 
+  // Sin filtro de status a propósito: la presencia (RealtimeGateway) le avisa a CUALQUIER
+  // chat del que participe, aceptado o no, no solo a las conversaciones ya confirmadas.
+  getChatsForParticipant(participantId: string): ChatRecord[] {
+    return [...this.chatsById.values()].filter((chat) => chat.participantIds.includes(participantId));
+  }
+
   getPendingRequestsFor(participantId: string): ChatRecord[] {
     return [...this.chatsById.values()].filter(
       (chat) =>
@@ -135,6 +146,7 @@ export class ChatService implements OnModuleDestroy {
       kind: content.kind,
       text: content.text,
       media: content.media,
+      delivered: false,
       createdAt: now,
       expiresAt: now + MESSAGE_TTL_MS,
     };
@@ -161,6 +173,24 @@ export class ChatService implements OnModuleDestroy {
 
     message.mediaStatus = status;
     return message;
+  }
+
+  // Se llama cuando `recipientId` se une al chat (ver chat:join): todo lo que le mandó el
+  // otro participante y todavía no estaba marcado como entregado, ahora lo está — cubre
+  // el caso de "no estaba online cuando se lo mandaron". Devuelve solo lo que
+  // efectivamente cambió, para que el gateway no haga un broadcast de más si no había nada.
+  markDelivered(chatId: string, recipientId: string): ChatMessage[] {
+    const messages = this.messagesByChatId.get(chatId) ?? [];
+    const updated: ChatMessage[] = [];
+
+    for (const message of messages) {
+      if (message.senderId !== recipientId && !message.delivered) {
+        message.delivered = true;
+        updated.push(message);
+      }
+    }
+
+    return updated;
   }
 
   // Lazy + sweep: acá se filtran por si nadie corrió el barrido todavía, y de paso se

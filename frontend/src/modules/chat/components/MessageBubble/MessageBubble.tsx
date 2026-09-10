@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download, Eye, FileText, Image as ImageIcon, Music, Trash2, Video } from 'lucide-react'
+import { Check, CheckCheck, Download, Eye, FileText, Image as ImageIcon, Music, Trash2, Video } from 'lucide-react'
 import type { ChatMessage, MediaStatus } from '../../types'
 import { useMediaUrl, fetchMediaBlob } from '../../hooks/useMediaUrl'
 import { useSession } from '@/hooks/useSession'
@@ -174,7 +174,17 @@ export function MessageBubble({ message, isOwn, onMediaStatusChange }: MessageBu
       ) : (
         <ReceivedMediaGate message={message} onMediaStatusChange={onMediaStatusChange} />
       )}
-      <span className={styles.time}>{formatMessageTime(message.createdAt)}</span>
+      <span className={styles.time} title={isOwn ? (message.delivered ? 'Delivered' : 'Sent') : undefined}>
+        {formatMessageTime(message.createdAt)}
+        {isOwn &&
+          // Solo "entregado" (doble check gris) — a propósito no hay check de "leído"
+          // en v1, ver ChatMessage.delivered.
+          (message.delivered ? (
+            <CheckCheck size={13} className={styles.deliveryIcon} aria-hidden="true" />
+          ) : (
+            <Check size={13} className={styles.deliveryIcon} aria-hidden="true" />
+          ))}
+      </span>
     </div>
   )
 }

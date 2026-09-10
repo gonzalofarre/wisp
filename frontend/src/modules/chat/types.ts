@@ -17,6 +17,8 @@ export interface ChatMessage {
   text?: string
   media?: MessageMedia
   mediaStatus?: MediaStatus
+  // "Entregado" (doble check gris) — no hay check de "leído" en v1, a propósito.
+  delivered: boolean
   createdAt: number
   expiresAt: number
 }

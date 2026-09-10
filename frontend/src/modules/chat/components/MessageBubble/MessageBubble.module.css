@@ -17,7 +17,11 @@
 }
 
 .time {
-  @apply block text-right text-[0.6875rem] opacity-70;
+  @apply flex items-center justify-end gap-0.5 text-right text-[0.6875rem] opacity-70;
+}
+
+.deliveryIcon {
+  @apply shrink-0;
 }
 
 .image {

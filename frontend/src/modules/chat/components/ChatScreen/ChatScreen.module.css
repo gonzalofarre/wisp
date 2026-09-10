@@ -11,8 +11,16 @@
   @apply flex items-center gap-3 border-b border-border p-4;
 }
 
+.recipientInfo {
+  @apply flex min-w-0 flex-col;
+}
+
 .recipientId {
-  @apply font-mono text-sm font-semibold tracking-wide;
+  @apply truncate font-mono text-sm font-semibold tracking-wide;
+}
+
+.presence {
+  @apply flex items-center gap-1.5 text-xs text-text-secondary;
 }
 
 .error {

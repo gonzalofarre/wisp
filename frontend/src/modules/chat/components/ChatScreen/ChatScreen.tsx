@@ -5,6 +5,7 @@ import { useSession } from '@/hooks/useSession'
 import { apiFetch, ApiError, SESSION_EXPIRED_EVENT } from '@/lib/api'
 import { getSocket } from '@/lib/socket'
 import { IconButton } from '@/shared/IconButton/IconButton'
+import { StatusDot } from '@/shared/StatusDot/StatusDot'
 import { MessageList } from '../MessageList/MessageList'
 import { MessageInput } from '../MessageInput/MessageInput'
 import type { ChatMessage, MediaStatus } from '../../types'
@@ -23,6 +24,7 @@ interface LocationState {
 interface JoinAck {
   ok: boolean
   messages?: ChatMessage[]
+  recipientOnline?: boolean
   error?: string
 }
 
@@ -41,6 +43,16 @@ interface MediaStatusEvent {
   status: MediaStatus
 }
 
+interface PresenceEvent {
+  sessionId: string
+  online: boolean
+}
+
+interface DeliveredEvent {
+  chatId: string
+  deliveredTo: string
+}
+
 export function ChatScreen() {
   const { chatId } = useParams<{ chatId: string }>()
   const location = useLocation()
@@ -52,6 +64,7 @@ export function ChatScreen() {
   const [error, setError] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isConnected, setIsConnected] = useState(false)
+  const [recipientOnline, setRecipientOnline] = useState(false)
   // Media que se subió en MediaPreviewScreen y quedó esperando a que el socket termine
   // de unirse a la room para poder mandarla — se consume una sola vez, ver pendingMedia.ts.
   const pendingMediaIdRef = useRef<string | undefined>(undefined)
@@ -100,6 +113,7 @@ export function ChatScreen() {
     if (!session || !chatId) return
 
     const socket = getSocket()
+    const ownId = session.id
     socket.auth = { token: session.token }
 
     function handleConnect() {
@@ -111,6 +125,7 @@ export function ChatScreen() {
 
         setMessages(ack.messages ?? [])
         setIsConnected(true)
+        setRecipientOnline(ack.recipientOnline ?? false)
 
         const pendingMediaId = pendingMediaIdRef.current
         if (pendingMediaId) {
@@ -141,6 +156,23 @@ export function ChatScreen() {
       )
     }
 
+    // Solo hay dos participantes en un chat 1:1 — cualquier cambio de presencia que no
+    // sea el mío propio es, por descarte, el del otro lado. Comparar contra `session.id`
+    // (estable en esta closure) en vez de contra `recipientId` (que puede resolverse
+    // async en el otro efecto y quedar desactualizado acá) evita un falso negativo.
+    function handlePresence({ sessionId, online }: PresenceEvent) {
+      if (sessionId !== ownId) setRecipientOnline(online)
+    }
+
+    // Se dispara cuando el otro lado se une al chat (en vivo o poniéndose al día) y
+    // todo lo que yo le mandé antes pasa a entregado — un check se vuelve doble check gris.
+    function handleDelivered({ chatId: eventChatId, deliveredTo }: DeliveredEvent) {
+      if (eventChatId !== chatId) return
+      setMessages((current) =>
+        current.map((message) => (message.senderId !== deliveredTo ? { ...message, delivered: true } : message)),
+      )
+    }
+
     // El servidor emite esto cuando el token dejó de ser válido (sesión vencida por TTL)
     // antes de cortar la conexión — mismo evento global que usa apiFetch ante un 401, así
     // SessionProvider cierra la sesión sin importar si el corte vino de un fetch o del socket.
@@ -152,6 +184,8 @@ export function ChatScreen() {
     socket.on('disconnect', handleDisconnect)
     socket.on('chat:message', handleIncomingMessage)
     socket.on('chat:media-status', handleMediaStatus)
+    socket.on('presence:update', handlePresence)
+    socket.on('chat:delivered', handleDelivered)
     socket.on('session:expired', handleSessionExpired)
 
     socket.connect()
@@ -161,6 +195,8 @@ export function ChatScreen() {
       socket.off('disconnect', handleDisconnect)
       socket.off('chat:message', handleIncomingMessage)
       socket.off('chat:media-status', handleMediaStatus)
+      socket.off('presence:update', handlePresence)
+      socket.off('chat:delivered', handleDelivered)
       socket.off('session:expired', handleSessionExpired)
       socket.disconnect()
     }
@@ -210,7 +246,15 @@ export function ChatScreen() {
         <IconButton aria-label="Back" onClick={() => navigate('/home')}>
           <ArrowLeft size={20} />
         </IconButton>
-        <span className={styles.recipientId}>{recipientId ?? 'Connecting…'}</span>
+        <div className={styles.recipientInfo}>
+          <span className={styles.recipientId}>{recipientId ?? 'Connecting…'}</span>
+          {recipientId && (
+            <span className={styles.presence}>
+              <StatusDot status={recipientOnline ? 'online' : 'offline'} />
+              {recipientOnline ? 'Online' : 'Offline'}
+            </span>
+          )}
+        </div>
       </header>
 
       {!isConnected && <p className={styles.reconnecting}>Connecting…</p>}
