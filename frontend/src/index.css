@@ -33,3 +33,16 @@
 body {
   @apply bg-bg font-sans text-text-primary antialiased;
 }
+
+/* Anillo de foco por teclado, compartido por todos los controles interactivos (botones,
+   filas de lista, tabs). Reserva el espacio del outline siempre (transparente cuando no
+   hay foco) para que aparecer no mueva nada, y solo se pinta en :focus-visible — así un
+   click de mouse no lo dispara, pero Tab sí. */
+@utility focus-ring {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+
+  &:focus-visible {
+    outline-color: var(--color-accent);
+  }
+}

@@ -38,7 +38,7 @@
 
 .reject,
 .accept {
-  @apply flex h-12 w-12 items-center justify-center rounded-pill text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50;
+  @apply focus-ring flex h-12 w-12 items-center justify-center rounded-pill text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 .reject {

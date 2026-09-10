@@ -1,7 +1,7 @@
 @reference "../../../../index.css";
 
 .root {
-  @apply flex w-full flex-col gap-1 rounded-card border border-border bg-surface-elevated p-3.5 text-left transition-colors hover:bg-surface;
+  @apply focus-ring flex w-full flex-col gap-1 rounded-card border border-border bg-surface-elevated p-3.5 text-left transition-colors hover:bg-surface;
 }
 
 .topRow {
